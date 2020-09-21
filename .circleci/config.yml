@@ -22,30 +22,30 @@ jobs:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm i
-      - run: npm run test
+      - run: npm i --prefix backend
+      - run: npm run test --prefix backend
 
   test_frontend:
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm i
-      - run: npm run test
+      - run: npm i --prefix frontend
+      - run: npm run test --prefix frontend
 
   analyze_backend:
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm audit
+      - run: npm audit --prefix backend
 
   analyze_frontend:
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm audit
+      - run: npm audit --prefix frontend
 
 workflows:
   my_workflow:
