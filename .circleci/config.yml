@@ -38,14 +38,14 @@ jobs:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm audit --prefix backend
+      - run: npm audit --audit-level=critical --prefix backend
 
   analyze_frontend:
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm audit --prefix frontend
+      - run: npm audit --audit-level=critical --prefix frontend
 
 workflows:
   my_workflow:
