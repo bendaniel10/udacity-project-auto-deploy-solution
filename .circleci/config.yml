@@ -2,25 +2,22 @@ version: 2.1
 
 jobs:
   build_backend:
-    working_directory: ~/project/backend
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm i
-      - run: npm run lint
+      - run: npm i --prefix backend
+      - run: npm run lint --prefix backend
 
   build_frontend:
-    working_directory: ~/project/frontend
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - run: npm i
-      - run: npm run lint
+      - run: npm i --prefix frontend
+      - run: npm run lint --prefix frontend
 
   test_backend:
-    working_directory: ~/project/backend
     docker:
       - image: circleci/node:14.11.0
     steps:
@@ -29,7 +26,6 @@ jobs:
       - run: npm run test
 
   test_frontend:
-    working_directory: ~/project/frontend
     docker:
       - image: circleci/node:14.11.0
     steps:
@@ -38,7 +34,6 @@ jobs:
       - run: npm run test
 
   analyze_backend:
-    working_directory: ~/project/backend
     docker:
       - image: circleci/node:14.11.0
     steps:
@@ -46,7 +41,6 @@ jobs:
       - run: npm audit
 
   analyze_frontend:
-    working_directory: ~/project/frontend
     docker:
       - image: circleci/node:14.11.0
     steps:
