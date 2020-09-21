@@ -1,7 +1,72 @@
 version: 2.1
-orbs:
-  node: circleci/node@3.0.0
+
+jobs:
+  build_backend:
+    working_directory: ~/project/backend
+    docker:
+      - image: circleci/node:14.11.0
+    steps:
+      - checkout
+      - run: npm i
+      - run: npm run lint
+
+  build_frontend:
+    working_directory: ~/project/frontend
+    docker:
+      - image: circleci/node:14.11.0
+    steps:
+      - checkout
+      - run: npm i
+      - run: npm run lint
+
+  test_backend:
+    working_directory: ~/project/backend
+    docker:
+      - image: circleci/node:14.11.0
+    steps:
+      - checkout
+      - run: npm i
+      - run: npm run test
+
+  test_frontend:
+    working_directory: ~/project/frontend
+    docker:
+      - image: circleci/node:14.11.0
+    steps:
+      - checkout
+      - run: npm i
+      - run: npm run test
+
+  analyze_backend:
+    working_directory: ~/project/backend
+    docker:
+      - image: circleci/node:14.11.0
+    steps:
+      - checkout
+      - run: npm audit
+
+  analyze_frontend:
+    working_directory: ~/project/frontend
+    docker:
+      - image: circleci/node:14.11.0
+    steps:
+      - checkout
+      - run: npm audit
+
 workflows:
-  node-tests:
+  my_workflow:
     jobs:
-      - node/test
+      - build_backend
+      - build_frontend
+      - test_backend:
+          requires:
+            - build_backend
+      - test_frontend:
+          requires:
+            - build_frontend
+      - analyze_backend:
+          requires:
+            - test_backend
+      - analyze_frontend:
+          requires:
+            - test_frontend
