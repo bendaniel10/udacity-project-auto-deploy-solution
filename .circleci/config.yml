@@ -47,6 +47,92 @@ jobs:
       - checkout
       - run: npm audit --audit-level=critical --prefix frontend
 
+  deploy_backend_infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Deploy the backend infrastructure using cloudformation
+          command: |
+            aws cloudformation deploy \
+              --template-file cloudformation/backend_infrastructure.yml \
+              --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name udapeople-prod-backend-${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: Save backend URL and IP (for ansible)
+          command: |
+            BACKEND_AWS_PUBLIC_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+
+            echo "[all]\n$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt
+            echo "http://${BACKEND_AWS_PUBLIC_IP}:3030" >> .circleci/outputs/backend_url.txt
+
+            cat .circleci/outputs/backend_url.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/outputs/backend_url.txt
+
+  deploy_frontend_infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Deploy the backend infrastructure using cloudformation
+          command: |
+            aws cloudformation deploy \
+              --template-file cloudformation/frontend_infrastructure.yml \
+              --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name udapeople-prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+
+  deploy_cloudfront_infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Save previous bucket id suffix
+          command: |
+            PREVIOUS_BUCKET_ID_SUFFIX=$(aws cloudformation \
+                          list-exports --query "Exports[?Name==\`BucketIdSuffix\`].Value" \
+                          --no-paginate --output text)
+
+            echo "$PREVIOUS_BUCKET_ID_SUFFIX" >> .circleci/outputs/previous_bucket_id_suffix.txt
+
+            cat .circleci/outputs/previous_bucket_id_suffix.txt
+      - run:
+          name: Deploy the backend infrastructure using cloudformation
+          command: |
+            aws cloudformation deploy \
+              --template-file cloudformation/cloudfront_infrastructure.yml \
+              --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name udapeople-prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/outputs/previous_bucket_id_suffix.txt
+
+  configure_infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt playbook.yml
+
 workflows:
   my_workflow:
     jobs:

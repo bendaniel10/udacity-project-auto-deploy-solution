@@ -1,0 +1,5 @@
+- name: Configuring newly created EC2 instances
+  hosts: all
+  user: ubuntu
+  roles:
+    - setup

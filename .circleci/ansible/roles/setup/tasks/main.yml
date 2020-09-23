@@ -1,0 +1,43 @@
+- name: "update apt packages."
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: "upgrade packages"
+  become: yes
+  apt:
+    upgrade: yes
+
+- name: remove dependencies that are no longer required
+  become: yes
+  apt:
+    autoremove: yes
+
+- name: "install dependencies."
+  become: yes
+  apt:
+    name: [ "nodejs", "npm" ]
+    state: latest
+    update_cache: yes
+
+- name: "install pm2"
+  become: yes
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+#  Install Python, if needed.
+#    Update/upgrade packages.
+#    Install nodejs.
+#    Install pm2.
+#  Configure environment variables:
+#    ENVIRONMENT=production
+#    TYPEORM_CONNECTION=postgres
+#    TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts
+#    TYPEORM_HOST={your postgres database hostname in RDS}
+#    TYPEORM_PORT=5532 (or the port from RDS if it’s different)
+#    TYPEORM_USERNAME={your postgres database username in RDS}
+#    TYPEORM_PASSWORD={your postgres database password in RDS}
+#    TYPEORM_DATABASE={your postgres database name in RDS}
