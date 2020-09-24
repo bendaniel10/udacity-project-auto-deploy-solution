@@ -1,0 +1,23 @@
+---
+- name: Creates backend app directory
+  file:
+    path: ~/backend_app
+    state: directory
+
+- name: Copy compiled backend app
+  template:
+    src: "files/dist.zip"
+    dest: "~/backend_app/dist.zip"
+
+- name: Executing node
+  shell: |
+    pushd ~/backend_app || exit
+    unzip dist.zip
+    rm -rf dist.zip
+    mv dist/* .
+    rm -rf dist
+    popd
+
+- name: Executing node
+  shell: |
+    pm2 start ~/backend_app/main.js

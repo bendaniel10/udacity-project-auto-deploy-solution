@@ -1,5 +1,36 @@
 version: 2.1
 
+commands:
+  destroy_environment:
+    description: Destroy backend and frontend cloudformation stacks given a workflow ID.
+    parameters:
+      workflow_id:
+        type: string
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            echo "Destroying environment: <<parameters.workflow_id>> "
+            aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
+            aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
+  undo_migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            pushd backend
+            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
+              npm install
+              npm run migration:revert
+            fi
+            popd
+
 jobs:
   build_backend:
     docker:
@@ -8,6 +39,9 @@ jobs:
       - checkout
       - run: npm i --prefix backend
       - run: npm run lint --prefix backend
+      - save_cache:
+          paths: [ backend/node_modules ]
+          key: backend-build
 
   build_frontend:
     docker:
@@ -16,12 +50,17 @@ jobs:
       - checkout
       - run: npm i --prefix frontend
       - run: npm run lint --prefix frontend
+      - save_cache:
+          paths: [ frontend/node_modules ]
+          key: frontend-build
 
   test_backend:
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [ backend-build ]
       - run: npm i --prefix backend
       - run: npm run test --prefix backend
 
@@ -30,6 +69,8 @@ jobs:
       - image: circleci/node:14.11.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [ frontend-build ]
       - run: npm i --prefix frontend
       - run: npm run test --prefix frontend
 
@@ -75,6 +116,8 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/outputs/backend_url.txt
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
   deploy_frontend_infrastructure:
     docker:
@@ -88,6 +131,8 @@ jobs:
               --template-file cloudformation/frontend_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
   deploy_cloudfront_infrastructure:
     docker:
@@ -115,6 +160,8 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/outputs/previous_bucket_id_suffix.txt
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
   configure_infrastructure:
     docker:
@@ -127,11 +174,101 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
+  run_db_migrations_for_backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
       - run:
-          name: Configure server
+          name: Run DB migrations
           command: |
-            cd .circleci/ansible
+            pushd backend || exit
+            npm run migrations > migration_output.txt
+            popd || exit
+      - run:
+          name: Store migration result in a file.
+          command: |
+            pushd backend || exit
+            if grep -q "has been executed successfully." migration_output.txt
+            then
+              touch .circleci/outputs/db_migration_success
+            fi
+            popd || exit
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/outputs/db_migration_success
+
+  deploy_backend_artifact:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [ backend-build ]
+      - run:
+          name: Build backend app
+          command: |
+            pushd backend || exit
+            npm i
+            npm build
+            popd || exit
+      - run:
+          name: Setup EC2 instance & copy compiled backend to the EC2 instance
+          command: |
+            pushd backend || exit
             ansible-playbook -i inventory.txt playbook.yml
+            popd || exit
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
+
+  package_frontend_artifact:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [ frontend-build ]
+      - run:
+          name: Package frontend app
+          command: |
+            pushd frontend || exit
+            npm i
+            npm build
+            popd || exit
+      - save_cache:
+          paths: [ frontend/dist ]
+          key: frontend-dist-build
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
+
+  deploy_frontend_artifact:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys: [ frontend-dist-build ]
+      - run:
+          name: Copy frontend to s3 bucket.
+          command: |
+            export API_URL=`cat .circleci/outputs/backend_url.txt`
+            pushd frontend || exit
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            npm build
+            popd || exit
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
 
 workflows:
   my_workflow:
@@ -150,3 +287,6 @@ workflows:
       - analyze_frontend:
           requires:
             - test_frontend
+#      - deploy_backend_infrastructure:
+#          requires:
+#

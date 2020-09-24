@@ -3,3 +3,4 @@
   user: ubuntu
   roles:
     - setup
+    - deploy_backend

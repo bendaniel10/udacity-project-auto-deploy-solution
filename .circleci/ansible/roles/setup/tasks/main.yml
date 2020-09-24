@@ -13,10 +13,17 @@
   apt:
     autoremove: yes
 
-- name: "install dependencies."
+- name: "install node dependencies."
   become: yes
   apt:
     name: [ "nodejs", "npm" ]
+    state: latest
+    update_cache: yes
+
+- name: "Install zip utility."
+  become: yes
+  apt:
+    name: [ "zip", "unzip" ]
     state: latest
     update_cache: yes
 
@@ -28,16 +35,15 @@
     production: yes
     state: present
 
-#  Install Python, if needed.
-#    Update/upgrade packages.
-#    Install nodejs.
-#    Install pm2.
-#  Configure environment variables:
-#    ENVIRONMENT=production
-#    TYPEORM_CONNECTION=postgres
-#    TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts
-#    TYPEORM_HOST={your postgres database hostname in RDS}
-#    TYPEORM_PORT=5532 (or the port from RDS if it’s different)
-#    TYPEORM_USERNAME={your postgres database username in RDS}
-#    TYPEORM_PASSWORD={your postgres database password in RDS}
-#    TYPEORM_DATABASE={your postgres database name in RDS}
+- name: "Set environment variables"
+  become: yes
+  shell: |
+    echo "ENVIRONMENT=production" >> /etc/environment
+    echo "TYPEORM_CONNECTION=postgres" >> /etc/environment
+    echo "TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts" >> /etc/environment
+    echo "TYPEORM_HOST=udacity-postgres.cbhggy4kae9x.eu-central-1.rds.amazonaws.com" >> /etc/environment
+    echo "TYPEORM_PORT=5532" >> /etc/environment
+    echo "TYPEORM_USERNAME=postgres" >> /etc/environment
+    echo "TYPEORM_PASSWORD=HfLH3mk7elsAhod08r8n" >> /etc/environment
+    echo "TYPEORM_DATABASE=udacity_database" >> /etc/environment
+
