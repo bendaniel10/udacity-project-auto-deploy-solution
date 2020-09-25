@@ -97,7 +97,7 @@ jobs:
           name: Deploy the backend infrastructure using cloudformation
           command: |
             aws cloudformation deploy \
-              --template-file cloudformation/backend_infrastructure.yml \
+              --template-file .circleci/cloudformation/backend_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-backend-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
@@ -125,10 +125,10 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Deploy the backend infrastructure using cloudformation
+          name: Deploy the frontend infrastructure using cloudformation
           command: |
             aws cloudformation deploy \
-              --template-file cloudformation/frontend_infrastructure.yml \
+              --template-file .circleci/cloudformation/frontend_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy_environment:
@@ -153,7 +153,7 @@ jobs:
           name: Deploy the backend infrastructure using cloudformation
           command: |
             aws cloudformation deploy \
-              --template-file cloudformation/cloudfront_infrastructure.yml \
+              --template-file .circleci/cloudformation/cloudfront_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-cloudfront-${CIRCLE_WORKFLOW_ID:0:7}
       - persist_to_workspace:
@@ -214,7 +214,7 @@ jobs:
           name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
             pushd backend || exit
-            ansible-playbook -i inventory.txt playbook.yml
+            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
             popd || exit
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
