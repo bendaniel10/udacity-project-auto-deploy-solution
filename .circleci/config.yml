@@ -1,6 +1,14 @@
 version: 2.1
 
 commands:
+  install_tar_dependency:
+    description: Install tar dependency
+    steps:
+      - run:
+          name: Install tar dependency
+          command: |
+            apk add --update tar
+
   destroy_environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
@@ -15,6 +23,7 @@ commands:
             aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
             aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
+
   undo_migrations:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
@@ -112,6 +121,7 @@ jobs:
             echo "http://${BACKEND_AWS_PUBLIC_IP}:3030" >> .circleci/outputs/backend_url.txt
 
             cat .circleci/outputs/backend_url.txt
+      - install_tar_dependency
       - persist_to_workspace:
           root: ~/
           paths:
@@ -156,6 +166,7 @@ jobs:
               --template-file .circleci/cloudformation/cloudfront_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-cloudfront-${CIRCLE_WORKFLOW_ID:0:7}
+      - install_tar_dependency
       - persist_to_workspace:
           root: ~/
           paths:
@@ -185,6 +196,7 @@ jobs:
             popd || exit
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - install_tar_dependency
       - persist_to_workspace:
           root: ~/
           paths:
