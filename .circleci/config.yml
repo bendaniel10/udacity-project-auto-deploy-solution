@@ -155,7 +155,7 @@ jobs:
             aws cloudformation deploy \
               --template-file cloudformation/cloudfront_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --stack-name udapeople-prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+              --stack-name udapeople-prod-cloudfront-${CIRCLE_WORKFLOW_ID:0:7}
       - persist_to_workspace:
           root: ~/
           paths:
