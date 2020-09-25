@@ -172,6 +172,8 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - restore_cache:
+          keys: [ backend-build ]
       - run:
           name: Run DB migrations
           command: |
@@ -187,7 +189,7 @@ jobs:
               touch .circleci/outputs/db_migration_success
             fi
             popd || exit
-      - destroy_environment:
+      - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - run: apk add --update tar
       - persist_to_workspace:
@@ -221,7 +223,7 @@ jobs:
             pushd backend || exit
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
             popd || exit
-      - destroy_environment:
+      - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
@@ -242,7 +244,7 @@ jobs:
       - save_cache:
           paths: [ frontend/dist ]
           key: frontend-dist-build
-      - destroy_environment:
+      - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
@@ -304,6 +306,7 @@ workflows:
       - package_frontend_artifact:
           requires:
             - deploy_cloudfront_infrastructure
+            - run_db_migrations_for_backend
       - deploy_frontend_artifact:
           requires:
             - package_frontend_artifact
