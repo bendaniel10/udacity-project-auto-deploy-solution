@@ -163,20 +163,6 @@ jobs:
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
-  configure_infrastructure:
-    docker:
-      - image: python:3.7-alpine3.11
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update ansible
-      - destroy_environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-
   run_db_migrations_for_backend:
     docker:
       - image: circleci/node:13.8.0
@@ -218,6 +204,12 @@ jobs:
             npm i
             npm build
             popd || exit
+      - add_ssh_keys:
+          fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
       - run:
           name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
@@ -287,6 +279,26 @@ workflows:
       - analyze_frontend:
           requires:
             - test_frontend
-#      - deploy_backend_infrastructure:
-#          requires:
-#
+      - deploy_backend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_frontend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_cloudfront_infrastructure:
+          requires:
+            - deploy_frontend_infrastructure
+      - run_db_migrations_for_backend:
+          requires:
+            - deploy_backend_infrastructure
+      - deploy_backend_artifact:
+          requires:
+            - run_db_migrations_for_backend
+      - package_frontend_artifact:
+          requires:
+            - deploy_cloudfront_infrastructure
+      - deploy_frontend_artifact:
+          requires:
+            - package_frontend_artifact
