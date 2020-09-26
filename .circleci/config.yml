@@ -8,14 +8,9 @@ commands:
           name: Install dependencies
           when: on_fail
           command: |
-            apt-get -version
-            apk add --no-cache \
-                    python3 \
-                    py3-pip \
-                && pip3 install --upgrade pip \
-                && pip3 install \
-                    awscli \
-                && rm -rf /var/cache/apk/*
+            apt-get update
+            yes | apt-get install awscli
+
   destroy_environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
