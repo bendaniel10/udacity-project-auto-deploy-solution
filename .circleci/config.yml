@@ -177,25 +177,24 @@ jobs:
       - run:
           name: Install nodejs
           command: |
-            sudo yum update
-            curl –sL https://rpm.nodesource.com/setup_13.x | sudo bash -
-            sudo yum install –y nodejs
+            yum install -y epel-release
+            yum install -y npm nodejs
             node -version
       #      - run:
-#          name: Run DB migrations
-#          command: |
-#            pushd backend || exit
-#            npm run migrations >> migration_output.txt
-#            popd || exit
-#      - run:
-#          name: Store migration result in a file.
-#          command: |
-#            pushd backend || exit
-#            if grep -q "has been executed successfully." migration_output.txt
-#            then
-#              touch .circleci/outputs/db_migration_success
-#            fi
-#            popd || exit
+      #          name: Run DB migrations
+      #          command: |
+      #            pushd backend || exit
+      #            npm run migrations >> migration_output.txt
+      #            popd || exit
+      #      - run:
+      #          name: Store migration result in a file.
+      #          command: |
+      #            pushd backend || exit
+      #            if grep -q "has been executed successfully." migration_output.txt
+      #            then
+      #              touch .circleci/outputs/db_migration_success
+      #            fi
+      #            popd || exit
       - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - run: apk add --update tar
@@ -272,8 +271,8 @@ jobs:
           command: |
             export API_URL=`cat .circleci/outputs/backend_url.txt`
             pushd frontend || exit
-            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             npm build
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             popd || exit
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
