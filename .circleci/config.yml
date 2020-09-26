@@ -8,6 +8,8 @@ commands:
           name: Install dependencies
           when: on_fail
           command: |
+            which yum
+            which apt-get
             apk add --no-cache \
                     python3 \
                     py3-pip \
