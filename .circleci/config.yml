@@ -147,6 +147,13 @@ jobs:
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
+  destroy_infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
   deploy_cloudfront_infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -184,22 +191,22 @@ jobs:
       - checkout
       - restore_cache:
           keys: [ backend-build ]
-      - run:
-          name: Run DB migrations
-          command: |
-            pushd backend || exit
-            npm run migrations >> migration_output.txt
-            popd || exit
-      - run:
-          name: Store migration result in a file.
-          command: |
-            pushd backend || exit
-            if grep -q "has been executed successfully." migration_output.txt
-            then
-              touch .circleci/outputs/db_migration_success
-            fi
-            popd || exit
-      - install_aws_cli_on_node_image
+      - run: apulll "fail"
+#      - run:
+#          name: Run DB migrations
+#          command: |
+#            pushd backend || exit
+#            npm run migrations >> migration_output.txt
+#            popd || exit
+#      - run:
+#          name: Store migration result in a file.
+#          command: |
+#            pushd backend || exit
+#            if grep -q "has been executed successfully." migration_output.txt
+#            then
+#              touch .circleci/outputs/db_migration_success
+#            fi
+#            popd || exit
       - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - run: apk add --update tar
@@ -286,6 +293,8 @@ workflows:
   my_workflow:
     jobs:
       - run_db_migrations_for_backend
+          requires:
+            - destroy_infrastructure
 #      - build_backend
 #      - build_frontend
 #      - test_backend:
