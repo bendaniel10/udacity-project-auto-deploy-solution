@@ -1,16 +1,6 @@
 version: 2.1
 
 commands:
-  install_aws_cli_on_node_image:
-    description: Installs the aws cli package on a node image
-    steps:
-      - run:
-          name: Install dependencies
-          when: on_fail
-          command: |
-            apt-get update
-            yes | apt-get install awscli
-
   destroy_environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
@@ -147,13 +137,6 @@ jobs:
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
-  destroy_infrastructure:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - destroy_environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-
   deploy_cloudfront_infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -186,12 +169,12 @@ jobs:
 
   run_db_migrations_for_backend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: amazon/aws-cli
     steps:
       - checkout
       - restore_cache:
           keys: [ backend-build ]
-      - run: apulll "fail"
+      - run: yum -y install nodejs13
 #      - run:
 #          name: Run DB migrations
 #          command: |
@@ -217,11 +200,12 @@ jobs:
 
   deploy_backend_artifact:
     docker:
-      - image: circleci/node:13.8.0
+      - image: amazon/aws-cli
     steps:
       - checkout
       - restore_cache:
           keys: [ backend-build ]
+      - run: yum -y install nodejs13
       - run:
           name: Build backend app
           command: |
@@ -241,18 +225,18 @@ jobs:
             pushd backend || exit
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
             popd || exit
-      - install_aws_cli_on_node_image
       - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
   package_frontend_artifact:
     docker:
-      - image: circleci/node:13.8.0
+      - image: amazon/aws-cli
     steps:
       - checkout
       - restore_cache:
           keys: [ frontend-build ]
+      - run: yum -y install nodejs13
       - run:
           name: Package frontend app
           command: |
@@ -292,10 +276,8 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - destroy_infrastructure
       - run_db_migrations_for_backend:
-          requires:
-            - destroy_infrastructure
+
 #      - build_backend
 #      - build_frontend
 #      - test_backend:
