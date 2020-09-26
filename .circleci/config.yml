@@ -198,7 +198,7 @@ jobs:
     docker:
       - image: circleci/node:14.11.0
     steps:
-      run: yum -version
+      - run: yum -version
   deploy_backend_artifact:
     docker:
       - image: circleci/node:14.11.0
