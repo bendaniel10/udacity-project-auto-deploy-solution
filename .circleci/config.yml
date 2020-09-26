@@ -174,8 +174,14 @@ jobs:
       - checkout
       - restore_cache:
           keys: [ backend-build ]
-      - run: yum -y install nodejs13
-#      - run:
+      - run:
+          name: Install nodejs
+          command: |
+            sudo yum update
+            curl –sL https://rpm.nodesource.com/setup_13.x | sudo bash -
+            sudo yum install –y nodejs
+            node -version
+      #      - run:
 #          name: Run DB migrations
 #          command: |
 #            pushd backend || exit
