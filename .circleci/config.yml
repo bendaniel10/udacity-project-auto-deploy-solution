@@ -171,26 +171,24 @@ jobs:
     docker:
       - image: circleci/node:14.11.0
     steps:
-      - run: mkdir -p .circleci/outputs/
-      - run: touch .circleci/outputs/db_migration_success
-#      - checkout
-#      - restore_cache:
-#          keys: [ backend-build ]
-#      - run:
-#          name: Run DB migrations
-#          command: |
-#            pushd backend || exit
-#            npm run migrations >> migration_output.txt
-#            popd || exit
-#      - run:
-#          name: Store migration result in a file.
-#          command: |
-#            pushd backend || exit
-#            if grep -q "has been executed successfully." migration_output.txt
-#            then
-#              touch .circleci/outputs/db_migration_success
-#            fi
-#            popd || exit
+      - checkout
+      - restore_cache:
+          keys: [ backend-build ]
+      - run:
+          name: Run DB migrations
+          command: |
+            pushd backend || exit
+            npm run migrations >> migration_output.txt
+            popd || exit
+      - run:
+          name: Store migration result in a file.
+          command: |
+            pushd backend || exit
+            if grep -q "has been executed successfully." migration_output.txt
+            then
+              touch .circleci/outputs/db_migration_success
+            fi
+            popd || exit
       - persist_to_workspace:
           root: ~/
           paths:
@@ -276,42 +274,41 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - run_db_migrations_for_backend
-#      - build_backend
-#      - build_frontend
-#      - test_backend:
-#          requires:
-#            - build_backend
-#      - test_frontend:
-#          requires:
-#            - build_frontend
-#      - analyze_backend:
-#          requires:
-#            - test_backend
-#      - analyze_frontend:
-#          requires:
-#            - test_frontend
-#      - deploy_backend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#      - deploy_frontend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#      - deploy_cloudfront_infrastructure:
-#          requires:
-#            - deploy_frontend_infrastructure
-#      - run_db_migrations_for_backend:
-#          requires:
-#            - deploy_backend_infrastructure
-#      - deploy_backend_artifact:
-#          requires:
-#            - run_db_migrations_for_backend
-#      - package_frontend_artifact:
-#          requires:
-#            - deploy_cloudfront_infrastructure
-#            - run_db_migrations_for_backend
-#      - deploy_frontend_artifact:
-#          requires:
-#            - package_frontend_artifact
+      - build_backend
+      - build_frontend
+      - test_backend:
+          requires:
+            - build_backend
+      - test_frontend:
+          requires:
+            - build_frontend
+      - analyze_backend:
+          requires:
+            - test_backend
+      - analyze_frontend:
+          requires:
+            - test_frontend
+      - deploy_backend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_frontend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_cloudfront_infrastructure:
+          requires:
+            - deploy_frontend_infrastructure
+      - run_db_migrations_for_backend:
+          requires:
+            - deploy_backend_infrastructure
+      - deploy_backend_artifact:
+          requires:
+            - run_db_migrations_for_backend
+      - package_frontend_artifact:
+          requires:
+            - deploy_cloudfront_infrastructure
+            - run_db_migrations_for_backend
+      - deploy_frontend_artifact:
+          requires:
+            - package_frontend_artifact
