@@ -292,7 +292,7 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - run_db_migrations_for_backend
+      - run_db_migrations_for_backend:
           requires:
             - destroy_infrastructure
 #      - build_backend
