@@ -171,6 +171,7 @@ jobs:
     docker:
       - image: circleci/node:14.11.0
     steps:
+      - run: mkdir -p .circleci/outputs/
       - run: touch .circleci/outputs/db_migration_success
 #      - checkout
 #      - restore_cache:
