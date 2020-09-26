@@ -177,6 +177,8 @@ jobs:
       - run:
           name: Install nodejs
           command: |
+            yum search epel-release
+            yum info epel-release
             yum install -y epel-release
             yum install -y npm nodejs
             node -version
