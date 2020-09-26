@@ -169,36 +169,26 @@ jobs:
 
   run_db_migrations_for_backend:
     docker:
-      - image: amazon/aws-cli
+      - image: circleci/node:14.11.0
     steps:
       - checkout
       - restore_cache:
           keys: [ backend-build ]
       - run:
-          name: Install nodejs
+          name: Run DB migrations
           command: |
-            yum search epel-release
-            yum info epel-release
-            yum install -y epel-release
-            yum install -y npm nodejs
-            node -version
-      #      - run:
-      #          name: Run DB migrations
-      #          command: |
-      #            pushd backend || exit
-      #            npm run migrations >> migration_output.txt
-      #            popd || exit
-      #      - run:
-      #          name: Store migration result in a file.
-      #          command: |
-      #            pushd backend || exit
-      #            if grep -q "has been executed successfully." migration_output.txt
-      #            then
-      #              touch .circleci/outputs/db_migration_success
-      #            fi
-      #            popd || exit
-      - destroy_environment: # this won't run because aws isn't installed.
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+            pushd backend || exit
+            npm run migrations >> migration_output.txt
+            popd || exit
+      - run:
+          name: Store migration result in a file.
+          command: |
+            pushd backend || exit
+            if grep -q "has been executed successfully." migration_output.txt
+            then
+              touch .circleci/outputs/db_migration_success
+            fi
+            popd || exit
       - run: apk add --update tar
       - persist_to_workspace:
           root: ~/
@@ -207,12 +197,11 @@ jobs:
 
   deploy_backend_artifact:
     docker:
-      - image: amazon/aws-cli
+      - image: circleci/node:14.11.0
     steps:
       - checkout
       - restore_cache:
           keys: [ backend-build ]
-      - run: yum -y install nodejs13
       - run:
           name: Build backend app
           command: |
@@ -238,23 +227,28 @@ jobs:
 
   package_frontend_artifact:
     docker:
-      - image: amazon/aws-cli
+      - image: circleci/node:14.11.0
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/
       - restore_cache:
           keys: [ frontend-build ]
-      - run: yum -y install nodejs13
       - run:
           name: Package frontend app
           command: |
+            export API_URL=`cat .circleci/outputs/backend_url.txt`
             pushd frontend || exit
-            npm i
             npm build
             popd || exit
       - save_cache:
           paths: [ frontend/dist ]
           key: frontend-dist-build
-      - install_aws_cli_on_node_image
+      - run: apk add --update tar
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/frontend/dist
       - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
@@ -271,9 +265,7 @@ jobs:
       - run:
           name: Copy frontend to s3 bucket.
           command: |
-            export API_URL=`cat .circleci/outputs/backend_url.txt`
             pushd frontend || exit
-            npm build
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             popd || exit
       - destroy_environment:
@@ -283,43 +275,41 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - run_db_migrations_for_backend
-
-#      - build_backend
-#      - build_frontend
-#      - test_backend:
-#          requires:
-#            - build_backend
-#      - test_frontend:
-#          requires:
-#            - build_frontend
-#      - analyze_backend:
-#          requires:
-#            - test_backend
-#      - analyze_frontend:
-#          requires:
-#            - test_frontend
-#      - deploy_backend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#      - deploy_frontend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#      - deploy_cloudfront_infrastructure:
-#          requires:
-#            - deploy_frontend_infrastructure
-#      - run_db_migrations_for_backend:
-#          requires:
-#            - deploy_backend_infrastructure
-#      - deploy_backend_artifact:
-#          requires:
-#            - run_db_migrations_for_backend
-#      - package_frontend_artifact:
-#          requires:
-#            - deploy_cloudfront_infrastructure
-#            - run_db_migrations_for_backend
-#      - deploy_frontend_artifact:
-#          requires:
-#            - package_frontend_artifact
+      - build_backend
+      - build_frontend
+      - test_backend:
+          requires:
+            - build_backend
+      - test_frontend:
+          requires:
+            - build_frontend
+      - analyze_backend:
+          requires:
+            - test_backend
+      - analyze_frontend:
+          requires:
+            - test_frontend
+      - deploy_backend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_frontend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_cloudfront_infrastructure:
+          requires:
+            - deploy_frontend_infrastructure
+      - run_db_migrations_for_backend:
+          requires:
+            - deploy_backend_infrastructure
+      - deploy_backend_artifact:
+          requires:
+            - run_db_migrations_for_backend
+      - package_frontend_artifact:
+          requires:
+            - deploy_cloudfront_infrastructure
+            - run_db_migrations_for_backend
+      - deploy_frontend_artifact:
+          requires:
+            - package_frontend_artifact
