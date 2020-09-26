@@ -1,6 +1,20 @@
 version: 2.1
 
 commands:
+  install_aws_cli_on_node_image:
+    description: Installs the aws cli package on a node image
+    steps:
+      - run:
+          name: Install dependencies
+          when: on_fail
+          command: |
+            apk add --no-cache \
+                    python3 \
+                    py3-pip \
+                && pip3 install --upgrade pip \
+                && pip3 install \
+                    awscli \
+                && rm -rf /var/cache/apk/*
   destroy_environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
@@ -178,7 +192,7 @@ jobs:
           name: Run DB migrations
           command: |
             pushd backend || exit
-            npm run migrations > migration_output.txt
+            npm run migrations >> migration_output.txt
             popd || exit
       - run:
           name: Store migration result in a file.
@@ -189,6 +203,7 @@ jobs:
               touch .circleci/outputs/db_migration_success
             fi
             popd || exit
+      - install_aws_cli_on_node_image
       - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - run: apk add --update tar
@@ -223,6 +238,7 @@ jobs:
             pushd backend || exit
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
             popd || exit
+      - install_aws_cli_on_node_image
       - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
@@ -244,6 +260,7 @@ jobs:
       - save_cache:
           paths: [ frontend/dist ]
           key: frontend-dist-build
+      - install_aws_cli_on_node_image
       - destroy_environment: # this won't run because aws isn't installed.
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
@@ -272,41 +289,42 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - build_backend
-      - build_frontend
-      - test_backend:
-          requires:
-            - build_backend
-      - test_frontend:
-          requires:
-            - build_frontend
-      - analyze_backend:
-          requires:
-            - test_backend
-      - analyze_frontend:
-          requires:
-            - test_frontend
-      - deploy_backend_infrastructure:
-          requires:
-            - analyze_backend
-            - analyze_frontend
-      - deploy_frontend_infrastructure:
-          requires:
-            - analyze_backend
-            - analyze_frontend
-      - deploy_cloudfront_infrastructure:
-          requires:
-            - deploy_frontend_infrastructure
-      - run_db_migrations_for_backend:
-          requires:
-            - deploy_backend_infrastructure
-      - deploy_backend_artifact:
-          requires:
-            - run_db_migrations_for_backend
-      - package_frontend_artifact:
-          requires:
-            - deploy_cloudfront_infrastructure
-            - run_db_migrations_for_backend
-      - deploy_frontend_artifact:
-          requires:
-            - package_frontend_artifact
+      - run_db_migrations_for_backend
+#      - build_backend
+#      - build_frontend
+#      - test_backend:
+#          requires:
+#            - build_backend
+#      - test_frontend:
+#          requires:
+#            - build_frontend
+#      - analyze_backend:
+#          requires:
+#            - test_backend
+#      - analyze_frontend:
+#          requires:
+#            - test_frontend
+#      - deploy_backend_infrastructure:
+#          requires:
+#            - analyze_backend
+#            - analyze_frontend
+#      - deploy_frontend_infrastructure:
+#          requires:
+#            - analyze_backend
+#            - analyze_frontend
+#      - deploy_cloudfront_infrastructure:
+#          requires:
+#            - deploy_frontend_infrastructure
+#      - run_db_migrations_for_backend:
+#          requires:
+#            - deploy_backend_infrastructure
+#      - deploy_backend_artifact:
+#          requires:
+#            - run_db_migrations_for_backend
+#      - package_frontend_artifact:
+#          requires:
+#            - deploy_cloudfront_infrastructure
+#            - run_db_migrations_for_backend
+#      - deploy_frontend_artifact:
+#          requires:
+#            - package_frontend_artifact
