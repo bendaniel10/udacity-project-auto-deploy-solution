@@ -42,7 +42,7 @@ jobs:
       - run: npm run lint --prefix backend
       - save_cache:
           paths: [ backend/node_modules ]
-          key: backend-build
+          key: backend-build-${CIRCLE_WORKFLOW_ID:0:7}
 
   build_frontend:
     docker:
@@ -53,7 +53,7 @@ jobs:
       - run: npm run lint --prefix frontend
       - save_cache:
           paths: [ frontend/node_modules ]
-          key: frontend-build
+          key: frontend-build-${CIRCLE_WORKFLOW_ID:0:7}
 
   test_backend:
     docker:
@@ -61,7 +61,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [ backend-build ]
+          keys: [ backend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
       - run: npm i --prefix backend
       - run: npm run test --prefix backend
 
@@ -71,7 +71,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [ frontend-build ]
+          keys: [ frontend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
       - run: npm i --prefix frontend
       - run: npm run test --prefix frontend
 
@@ -105,12 +105,9 @@ jobs:
           name: Save backend URL and IP (for ansible)
           command: |
             BACKEND_AWS_PUBLIC_IP=$(aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --filters "Name=tag:Name,Values=backend-prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
-
-            echo "[all]\n$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt
-            echo "http://${BACKEND_AWS_PUBLIC_IP}:3030" >> .circleci/outputs/backend_url.txt
 
             cat .circleci/outputs/backend_url.txt
       - run: yum -y install tar gzip
@@ -172,7 +169,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [ backend-build ]
+          keys: [ backend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
       - run:
           name: Run DB migrations
           command: |
@@ -200,7 +197,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [ backend-build ]
+          keys: [ backend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
       - run:
           name: Install dependencies
           command: |
@@ -231,7 +228,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [ frontend-build ]
+          keys: [ frontend-build$-{CIRCLE_WORKFLOW_ID:0:7} ]
       - run:
           name: Install dependencies
           command: |
@@ -247,18 +244,23 @@ jobs:
             npm run build
       - save_cache:
           paths: [ frontend/dist ]
-          key: frontend-dist-build
+          key: frontend-dist-build-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
   deploy_frontend_artifact:
     docker:
-      - image: amazon/aws-cli
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl tar
+            pip install awscli
       - restore_cache:
-          keys: [ frontend-dist-build ]
+          keys: [ frontend-dist-build-${CIRCLE_WORKFLOW_ID:0:7} ]
       - run:
           name: Copy frontend to s3 bucket.
           command: |
