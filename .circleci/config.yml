@@ -111,7 +111,9 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
             echo $BACKEND_AWS_PUBLIC_IP >> .circleci/outputs/backend_url.txt
+            echo "[all]\n$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt
             cat .circleci/outputs/backend_url.txt
+            cat .circleci/ansible/inventory.txt
       - run: yum -y install tar gzip
       - persist_to_workspace:
           root: ~/
@@ -283,6 +285,7 @@ jobs:
       - run:
           name: Package frontend app
           command: |
+            # curl -s http://udapeople-prod-3c7c5cd.s3-website.eu-central-1.amazonaws.com/ | grep "Welcome"
             export API_URL=`cat .circleci/outputs/backend_url.txt`
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
