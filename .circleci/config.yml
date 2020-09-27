@@ -26,12 +26,11 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            pushd backend
+            cd ~/project/backend
             if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
               npm install
               npm run migration:revert
             fi
-            popd
 
 jobs:
   build_backend:
@@ -210,18 +209,16 @@ jobs:
       - run:
           name: Build backend app
           command: |
-            pushd backend || exit
+            cd ~/project/backend
             npm i
             npm build
-            popd || exit
       - add_ssh_keys:
           fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
       - run:
           name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
-            pushd backend || exit
+            cd ~/project/backend
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
-            popd || exit
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
@@ -238,19 +235,17 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl nodejs npm ansible
+            apk add --update curl nodejs npm ansible tar
             pip install awscli
       - run:
           name: Package frontend app
           command: |
             export API_URL=`cat .circleci/outputs/backend_url.txt`
-            pushd frontend || exit
+            cd ~/project/frontend
             npm build
-            popd || exit
       - save_cache:
           paths: [ frontend/dist ]
           key: frontend-dist-build
-      - run: apk add --update tar
       - persist_to_workspace:
           root: ~/
           paths:
@@ -271,9 +266,8 @@ jobs:
       - run:
           name: Copy frontend to s3 bucket.
           command: |
-            pushd frontend || exit
+            cd ~/project/frontend
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-            popd || exit
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
