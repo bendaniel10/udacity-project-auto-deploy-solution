@@ -111,7 +111,9 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
             echo $BACKEND_AWS_PUBLIC_IP >> .circleci/outputs/backend_url.txt
-            echo "[all]\n$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt
+            echo "[all]" >> .circleci/ansible/inventory.txt
+            echo "$BACKEND_AWS_PUBLIC_IP" >> .circleci/ansible/inventory.txt
+
             cat .circleci/outputs/backend_url.txt
             cat .circleci/ansible/inventory.txt
       - run: yum -y install tar gzip
@@ -119,6 +121,7 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/outputs/backend_url.txt
+            - project/.circleci/ansible/inventory.txt
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -285,8 +288,12 @@ jobs:
       - run:
           name: Package frontend app
           command: |
-            # curl -s http://udapeople-prod-3c7c5cd.s3-website.eu-central-1.amazonaws.com/ | grep "Welcome"
-            export API_URL=`cat .circleci/outputs/backend_url.txt`
+            if curl -s http://udapeople-prod-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.eu-central-1.amazonaws.com/ | grep "Welcome"
+            then
+            return 1
+            else
+            return 0
+            fi
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
