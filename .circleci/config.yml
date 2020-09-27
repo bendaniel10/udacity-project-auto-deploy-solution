@@ -40,9 +40,10 @@ jobs:
       - checkout
       - run: npm i --prefix backend
       - run: npm run lint --prefix backend
-      - save_cache:
-          paths: [ backend/node_modules ]
-          key: backend-build-${CIRCLE_WORKFLOW_ID:0:7}
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend/node_modules
 
   build_frontend:
     docker:
@@ -51,17 +52,18 @@ jobs:
       - checkout
       - run: npm i --prefix frontend
       - run: npm run lint --prefix frontend
-      - save_cache:
-          paths: [ frontend/node_modules ]
-          key: frontend-build-${CIRCLE_WORKFLOW_ID:0:7}
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/frontend/node_modules
 
   test_backend:
     docker:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [ backend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
+      - attach_workspace:
+          at: ~/
       - run: npm i --prefix backend
       - run: npm run test --prefix backend
 
@@ -70,8 +72,8 @@ jobs:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [ frontend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
+      - attach_workspace:
+          at: ~/
       - run: npm i --prefix frontend
       - run: npm run test --prefix frontend
 
@@ -168,8 +170,8 @@ jobs:
       - image: circleci/node:14.11.0
     steps:
       - checkout
-      - restore_cache:
-          keys: [ backend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Run DB migrations
           command: |
@@ -196,8 +198,8 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - restore_cache:
-          keys: [ backend-build-${CIRCLE_WORKFLOW_ID:0:7} ]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
@@ -227,8 +229,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/
-      - restore_cache:
-          keys: [ frontend-build$-{CIRCLE_WORKFLOW_ID:0:7} ]
       - run:
           name: Install dependencies
           command: |
@@ -242,9 +242,10 @@ jobs:
             npm i
             npm install typescript@rc
             npm run build
-      - save_cache:
-          paths: [ frontend/dist ]
-          key: frontend-dist-build-${CIRCLE_WORKFLOW_ID:0:7}
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/frontend/dist
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
@@ -259,8 +260,8 @@ jobs:
           command: |
             apk add --update curl tar
             pip install awscli
-      - restore_cache:
-          keys: [ frontend-dist-build-${CIRCLE_WORKFLOW_ID:0:7} ]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Copy frontend to s3 bucket.
           command: |
