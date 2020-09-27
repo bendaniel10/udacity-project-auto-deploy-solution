@@ -179,6 +179,7 @@ jobs:
           command: |
             pushd backend || exit
             npm run migrations >> migration_output.txt
+            cat migration_output.txt
             popd || exit
       - run:
           name: Store migration result in a file.
@@ -194,26 +195,18 @@ jobs:
           paths:
             - project/.circleci/outputs/
 
-  which_package:
-    docker:
-      - image: circleci/node:14.11.0
-    steps:
-      - run:
-          name: install ansible
-          command: |
-            sudo apt update
-            sudo apt install software-properties-common
-            sudo apt-add-repository --yes --update ppa:ansible/ansible
-            sudo apt install ansible
-            ansible -version
-
   deploy_backend_artifact:
     docker:
-      - image: circleci/node:14.11.0
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - restore_cache:
           keys: [ backend-build ]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl nodejs npm ansible
+            pip install awscli
       - run:
           name: Build backend app
           command: |
@@ -224,28 +217,29 @@ jobs:
       - add_ssh_keys:
           fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
       - run:
-          name: Install dependencies
-          command: |
-            apk add --update ansible
-      - run:
           name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
             pushd backend || exit
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
             popd || exit
-      - destroy_environment: # this won't run because aws isn't installed.
+      - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
   package_frontend_artifact:
     docker:
-      - image: circleci/node:14.11.0
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - attach_workspace:
           at: ~/
       - restore_cache:
           keys: [ frontend-build ]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl nodejs npm ansible
+            pip install awscli
       - run:
           name: Package frontend app
           command: |
@@ -261,7 +255,7 @@ jobs:
           root: ~/
           paths:
             - project/frontend/dist
-      - destroy_environment: # this won't run because aws isn't installed.
+      - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
 
@@ -287,42 +281,41 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - which_package
-#      - build_backend
-#      - build_frontend
-#      - test_backend:
-#          requires:
-#            - build_backend
-#      - test_frontend:
-#          requires:
-#            - build_frontend
-#      - analyze_backend:
-#          requires:
-#            - test_backend
-#      - analyze_frontend:
-#          requires:
-#            - test_frontend
-#      - deploy_backend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#      - deploy_frontend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#      - deploy_cloudfront_infrastructure:
-#          requires:
-#            - deploy_frontend_infrastructure
-#      - run_db_migrations_for_backend:
-#          requires:
-#            - deploy_backend_infrastructure
-#      - deploy_backend_artifact:
-#          requires:
-#            - run_db_migrations_for_backend
-#      - package_frontend_artifact:
-#          requires:
-#            - deploy_cloudfront_infrastructure
-#            - run_db_migrations_for_backend
-#      - deploy_frontend_artifact:
-#          requires:
-#            - package_frontend_artifact
+      - build_backend
+      - build_frontend
+      - test_backend:
+          requires:
+            - build_backend
+      - test_frontend:
+          requires:
+            - build_frontend
+      - analyze_backend:
+          requires:
+            - test_backend
+      - analyze_frontend:
+          requires:
+            - test_frontend
+      - deploy_backend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_frontend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+      - deploy_cloudfront_infrastructure:
+          requires:
+            - deploy_frontend_infrastructure
+      - run_db_migrations_for_backend:
+          requires:
+            - deploy_backend_infrastructure
+      - deploy_backend_artifact:
+          requires:
+            - run_db_migrations_for_backend
+      - package_frontend_artifact:
+          requires:
+            - deploy_cloudfront_infrastructure
+            - run_db_migrations_for_backend
+      - deploy_frontend_artifact:
+          requires:
+            - package_frontend_artifact
