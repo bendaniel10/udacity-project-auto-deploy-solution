@@ -269,42 +269,40 @@ jobs:
       - undo_migrations
 
   smoke_test_frontend:
-    package_frontend_artifact:
-      docker:
-        - image: python:3.7-alpine3.11
-      steps:
-        - run:
-            name: Install dependencies
-            command: |
-              apk add --update curl
-              pip install awscli
-        - run:
-            name: Package frontend app
-            command: |
-              export API_URL=`cat .circleci/outputs/backend_url.txt`
-        - destroy_environment:
-            workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-        - undo_migrations
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl
+            pip install awscli
+      - run:
+          name: Package frontend app
+          command: |
+            export API_URL=`cat .circleci/outputs/backend_url.txt`
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
 
   smoke_test_backend:
-    package_frontend_artifact:
-      docker:
-        - image: python:3.7-alpine3.11
-      steps:
-        - attach_workspace:
-            at: ~/
-        - run:
-            name: Install dependencies
-            command: |
-              apk add --update curl
-              pip install awscli
-        - run:
-            name: Package frontend app
-            command: |
-              export API_URL=`cat .circleci/outputs/backend_url.txt`
-        - destroy_environment:
-            workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-        - undo_migrations
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl
+            pip install awscli
+      - run:
+          name: Package frontend app
+          command: |
+            export API_URL=`cat .circleci/outputs/backend_url.txt`
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
 
 workflows:
   my_workflow:
