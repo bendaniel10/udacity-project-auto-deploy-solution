@@ -235,21 +235,17 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl nodejs npm ansible tar
+            apk add --update curl nodejs npm ansible
             pip install awscli
       - run:
           name: Package frontend app
           command: |
             export API_URL=`cat .circleci/outputs/backend_url.txt`
             cd ~/project/frontend
-            npm build
+            npm run build
       - save_cache:
           paths: [ frontend/dist ]
           key: frontend-dist-build
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/frontend/dist
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
@@ -259,8 +255,6 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/
       - restore_cache:
           keys: [ frontend-dist-build ]
       - run:
