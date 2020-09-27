@@ -110,7 +110,7 @@ jobs:
               --filters "Name=tag:Name,Values=backend-prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
-
+            echo $BACKEND_AWS_PUBLIC_IP >> .circleci/outputs/backend_url.txt
             cat .circleci/outputs/backend_url.txt
       - run: yum -y install tar gzip
       - persist_to_workspace:
