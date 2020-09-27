@@ -208,7 +208,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl nodejs npm ansible
+            apk add --update curl nodejs npm ansible zip
             pip install awscli
       - run:
           name: Build backend app
@@ -216,6 +216,13 @@ jobs:
             cd ~/project/backend
             npm i
             npm run build
+      - run:
+          name: Move dist.zip to ansible/deploy_backend/files
+          command: |
+            mkdir -p .circleci/ansible/roles/deploy_backend/files
+            cd ~/project/backend
+            zip -q dist.zip dist
+            mv dist.zip .circleci/ansible/roles/deploy_backend/files/
       - add_ssh_keys:
           fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
       - run:
