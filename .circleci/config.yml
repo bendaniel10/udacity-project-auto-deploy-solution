@@ -185,8 +185,8 @@ jobs:
             npm run build
             cd dist
             zip -r dist.zip *
-            ls
-            mv dist.zip .circleci/ansible/roles/deploy_backend/files/
+            mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
+            mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
       - add_ssh_keys:
           fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
       - run:
