@@ -183,12 +183,8 @@ jobs:
             cd ~/project/backend
             npm i
             npm run build
-      - run:
-          name: Move dist.zip to ansible/deploy_backend/files
-          command: |
-            mkdir -p .circleci/ansible/roles/deploy_backend/files
-            cd ~/project/backend
-            zip -q dist.zip dist
+            cd dist
+            zip -r dist.zip *
             mv dist.zip .circleci/ansible/roles/deploy_backend/files/
       - add_ssh_keys:
           fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
@@ -343,54 +339,55 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - build_backend
-      - build_frontend
-      - test_backend:
-          requires:
-            - build_backend
-      - test_frontend:
-          requires:
-            - build_frontend
-      - analyze_backend:
-          requires:
-            - test_backend
-      - analyze_frontend:
-          requires:
-            - test_frontend
-      - deploy_backend_infrastructure:
-          requires:
-            - analyze_backend
-            - analyze_frontend
-          filters:
-            branches:
-              only: [ master ]
-      - deploy_frontend_infrastructure:
-          requires:
-            - analyze_backend
-            - analyze_frontend
-          filters:
-            branches:
-              only: [ master ]
-      - run_db_migrations_for_backend:
-          requires:
-            - deploy_backend_infrastructure
-      - deploy_backend_artifact:
-          requires:
-            - run_db_migrations_for_backend
-      - package_frontend_artifact:
-          requires:
-            - deploy_frontend_infrastructure
-            - run_db_migrations_for_backend
-      - deploy_frontend_artifact:
-          requires:
-            - package_frontend_artifact
-      - smoke_test_backend:
-          requires:
-            - deploy_backend_artifact
-      - smoke_test_frontend:
-          requires:
-            - deploy_frontend_artifact
-      - deploy_cloudfront_infrastructure:
-          requires:
-            - smoke_test_backend
-            - smoke_test_frontend
+      - deploy_backend_artifact
+#      - build_backend
+#      - build_frontend
+#      - test_backend:
+#          requires:
+#            - build_backend
+#      - test_frontend:
+#          requires:
+#            - build_frontend
+#      - analyze_backend:
+#          requires:
+#            - test_backend
+#      - analyze_frontend:
+#          requires:
+#            - test_frontend
+#      - deploy_backend_infrastructure:
+#          requires:
+#            - analyze_backend
+#            - analyze_frontend
+#          filters:
+#            branches:
+#              only: [ master ]
+#      - deploy_frontend_infrastructure:
+#          requires:
+#            - analyze_backend
+#            - analyze_frontend
+#          filters:
+#            branches:
+#              only: [ master ]
+#      - run_db_migrations_for_backend:
+#          requires:
+#            - deploy_backend_infrastructure
+#      - deploy_backend_artifact:
+#          requires:
+#            - run_db_migrations_for_backend
+#      - package_frontend_artifact:
+#          requires:
+#            - deploy_frontend_infrastructure
+#            - run_db_migrations_for_backend
+#      - deploy_frontend_artifact:
+#          requires:
+#            - package_frontend_artifact
+#      - smoke_test_backend:
+#          requires:
+#            - deploy_backend_artifact
+#      - smoke_test_frontend:
+#          requires:
+#            - deploy_frontend_artifact
+#      - deploy_cloudfront_infrastructure:
+#          requires:
+#            - smoke_test_backend
+#            - smoke_test_frontend
