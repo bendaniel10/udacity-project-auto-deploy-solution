@@ -13,22 +13,19 @@ commands:
           command: |
             echo "Destroying environment: <<parameters.workflow_id>> "
             aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
-            aws cloudformation delete-stack --stack-name udapeople-prod-cloudfront-<<parameters.workflow_id>>
             aws s3 rm s3://udapeople-prod-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
 
   undo_migrations:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
-      - attach_workspace:
-          at: ~/
       - run:
           name: Revert migrations
           when: on_fail
           command: |
             cd ~/project/backend
             if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
-              npm install
+              npm i
               npm run migration:revert
             fi
 
@@ -137,36 +134,6 @@ jobs:
               --template-file .circleci/cloudformation/frontend_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
-      - destroy_environment:
-          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-
-  deploy_cloudfront_infrastructure:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run:
-          name: Save previous bucket id suffix
-          command: |
-            PREVIOUS_BUCKET_ID_SUFFIX=$(aws cloudformation \
-                          list-exports --query "Exports[?Name==\`BucketIdSuffix\`].Value" \
-                          --no-paginate --output text)
-
-            echo "$PREVIOUS_BUCKET_ID_SUFFIX" >> .circleci/outputs/previous_bucket_id_suffix.txt
-
-            cat .circleci/outputs/previous_bucket_id_suffix.txt
-      - run:
-          name: Deploy the backend infrastructure using cloudformation
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/cloudformation/cloudfront_infrastructure.yml \
-              --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --stack-name udapeople-prod-cloudfront-${CIRCLE_WORKFLOW_ID:0:7}
-      - run: yum -y install tar gzip
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/outputs/previous_bucket_id_suffix.txt
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -287,6 +254,8 @@ jobs:
     docker:
       - image: python:3.7-alpine3.11
     steps:
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
@@ -319,7 +288,54 @@ jobs:
       - run:
           name: Package frontend app
           command: |
-            export API_URL=`cat .circleci/outputs/backend_url.txt`
+            API_URL=`cat .circleci/outputs/backend_url.txt`
+            if curl -s http://${API_URL}:3030/api/status | grep "Ok"
+            then
+            return 0
+            else
+            return 1
+            fi
+      - destroy_environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+      - undo_migrations
+
+
+  deploy_cloudfront_infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Save previous bucket id suffix
+          command: |
+            PREVIOUS_BUCKET_ID_SUFFIX=$(aws cloudformation \
+                          list-exports --query "Exports[?Name==\`BucketIdSuffix\`].Value" \
+                          --no-paginate --output text)
+
+            echo "$PREVIOUS_BUCKET_ID_SUFFIX" >> .circleci/outputs/previous_bucket_id_suffix.txt
+
+            cat .circleci/outputs/previous_bucket_id_suffix.txt
+      - run:
+          name: Deploy the backend infrastructure using cloudformation
+          command: |
+            OLD_WORKFLOW_ID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`UdapeopleWorkflowID\`].Value" \
+              --no-paginate --output text)
+
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+
+            aws cloudformation deploy \
+              --template-file .circleci/cloudformation/cloudfront_infrastructure.yml \
+              --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name udapeople-prod-cloudfront-${CIRCLE_WORKFLOW_ID:0:7}
+
+            if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
+            then
+              aws s3 rm "s3://udapeople-prod-${OLD_WORKFLOW_ID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-prod-backend-${OLD_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-prod-frontend-${OLD_WORKFLOW_ID}"
+            fi
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
@@ -345,13 +361,16 @@ workflows:
           requires:
             - analyze_backend
             - analyze_frontend
+          filters:
+            branches:
+              only: [ master ]
       - deploy_frontend_infrastructure:
           requires:
             - analyze_backend
             - analyze_frontend
-      - deploy_cloudfront_infrastructure:
-          requires:
-            - deploy_frontend_infrastructure
+          filters:
+            branches:
+              only: [ master ]
       - run_db_migrations_for_backend:
           requires:
             - deploy_backend_infrastructure
@@ -360,8 +379,18 @@ workflows:
             - run_db_migrations_for_backend
       - package_frontend_artifact:
           requires:
-            - deploy_cloudfront_infrastructure
+            - deploy_frontend_infrastructure
             - run_db_migrations_for_backend
       - deploy_frontend_artifact:
           requires:
             - package_frontend_artifact
+      - smoke_test_backend:
+          requires:
+            - deploy_backend_artifact
+      - smoke_test_frontend:
+          requires:
+            - deploy_frontend_artifact
+      - deploy_cloudfront_infrastructure:
+          requires:
+            - smoke_test_backend
+            - smoke_test_frontend

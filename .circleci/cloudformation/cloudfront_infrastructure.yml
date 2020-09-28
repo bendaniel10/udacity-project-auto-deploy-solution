@@ -34,6 +34,6 @@ Resources:
 Outputs:
   BucketIdSuffix:
     Value: !Sub ${ID}
-    Description: URL for website hosted on S3
+    Description: The id of the workflow. This is used to clean up resources when a new deployment is made.
     Export:
-      Name: ID
+      Name: UdapeopleWorkflowID
