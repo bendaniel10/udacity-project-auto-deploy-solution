@@ -9,14 +9,11 @@
     src: "files/dist.zip"
     dest: "~/backend_app/dist.zip"
 
-- name: Executing node
+- name: Unzip backend files to correct directory
   shell: |
-    pushd ~/backend_app || exit
+    cd ~/backend_app
     unzip dist.zip
     rm -rf dist.zip
-    mv dist/* .
-    rm -rf dist
-    popd
 
 - name: Executing node
   shell: |
