@@ -340,55 +340,54 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - deploy_backend_artifact
-#      - build_backend
-#      - build_frontend
-#      - test_backend:
-#          requires:
-#            - build_backend
-#      - test_frontend:
-#          requires:
-#            - build_frontend
-#      - analyze_backend:
-#          requires:
-#            - test_backend
-#      - analyze_frontend:
-#          requires:
-#            - test_frontend
-#      - deploy_backend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#          filters:
-#            branches:
-#              only: [ master ]
-#      - deploy_frontend_infrastructure:
-#          requires:
-#            - analyze_backend
-#            - analyze_frontend
-#          filters:
-#            branches:
-#              only: [ master ]
-#      - run_db_migrations_for_backend:
-#          requires:
-#            - deploy_backend_infrastructure
-#      - deploy_backend_artifact:
-#          requires:
-#            - run_db_migrations_for_backend
-#      - package_frontend_artifact:
-#          requires:
-#            - deploy_frontend_infrastructure
-#            - run_db_migrations_for_backend
-#      - deploy_frontend_artifact:
-#          requires:
-#            - package_frontend_artifact
-#      - smoke_test_backend:
-#          requires:
-#            - deploy_backend_artifact
-#      - smoke_test_frontend:
-#          requires:
-#            - deploy_frontend_artifact
-#      - deploy_cloudfront_infrastructure:
-#          requires:
-#            - smoke_test_backend
-#            - smoke_test_frontend
+      - build_backend
+      - build_frontend
+      - test_backend:
+          requires:
+            - build_backend
+      - test_frontend:
+          requires:
+            - build_frontend
+      - analyze_backend:
+          requires:
+            - test_backend
+      - analyze_frontend:
+          requires:
+            - test_frontend
+      - deploy_backend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+          filters:
+            branches:
+              only: [ master ]
+      - deploy_frontend_infrastructure:
+          requires:
+            - analyze_backend
+            - analyze_frontend
+          filters:
+            branches:
+              only: [ master ]
+      - run_db_migrations_for_backend:
+          requires:
+            - deploy_backend_infrastructure
+      - deploy_backend_artifact:
+          requires:
+            - run_db_migrations_for_backend
+      - package_frontend_artifact:
+          requires:
+            - deploy_frontend_infrastructure
+            - run_db_migrations_for_backend
+      - deploy_frontend_artifact:
+          requires:
+            - package_frontend_artifact
+      - smoke_test_backend:
+          requires:
+            - deploy_backend_artifact
+      - smoke_test_frontend:
+          requires:
+            - deploy_frontend_artifact
+      - deploy_cloudfront_infrastructure:
+          requires:
+            - smoke_test_backend
+            - smoke_test_frontend
