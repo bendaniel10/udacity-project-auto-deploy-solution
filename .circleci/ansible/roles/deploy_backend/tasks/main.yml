@@ -5,7 +5,7 @@
     state: directory
 
 - name: Copy compiled backend app
-  template:
+  copy:
     src: "files/dist.zip"
     dest: "~/backend_app/dist.zip"
 
