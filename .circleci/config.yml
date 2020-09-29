@@ -175,6 +175,7 @@ jobs:
           command: |
             apk add --update curl nodejs npm ansible zip
             pip install awscli
+            ansible-galaxy install weareinteractive.environment
       - run:
           name: Build backend app
           command: |

@@ -35,15 +35,4 @@
     production: yes
     state: present
 
-- name: "Set environment variables"
-  become: yes
-  shell: |
-    echo "ENVIRONMENT=production" >> /etc/environment
-    echo "TYPEORM_CONNECTION=postgres" >> /etc/environment
-    echo "TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts" >> /etc/environment
-    echo "TYPEORM_HOST=udacity-postgres.cbhggy4kae9x.eu-central-1.rds.amazonaws.com" >> /etc/environment
-    echo "TYPEORM_PORT=5532" >> /etc/environment
-    echo "TYPEORM_USERNAME=postgres" >> /etc/environment
-    echo "TYPEORM_PASSWORD=HfLH3mk7elsAhod08r8n" >> /etc/environment
-    echo "TYPEORM_DATABASE=udacity_database" >> /etc/environment
 
