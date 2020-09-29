@@ -12,6 +12,9 @@ commands:
           when: on_fail
           command: |
             echo "Destroying environment: <<parameters.workflow_id>> "
+            aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
+            aws s3 rm s3://udapeople-prod-<<parameters.workflow_id>> --recursive
+            aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
 
   undo_migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -20,7 +23,11 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            echo "undo migrations"
+            cd ~/project/backend
+            if [[ -f "~/project/.circleci/outputs/db_migration_success" ]]; then
+              npm i
+              npm run migration:revert
+            fi
 
 jobs:
   build_backend:
@@ -177,6 +184,7 @@ jobs:
             npm i
             npm run build
             cd dist
+            cp ../package.json .
             zip -r dist.zip *
             mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
             mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
@@ -276,7 +284,7 @@ jobs:
             apk add --update curl
             pip install awscli
       - run:
-          name: Package frontend app
+          name: Test backend app.
           command: |
             API_URL=`cat .circleci/outputs/backend_url.txt`
             curl -s http://${API_URL}:3030/api/status
