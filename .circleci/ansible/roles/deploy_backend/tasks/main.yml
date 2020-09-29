@@ -16,13 +16,15 @@
     rm -rf dist.zip
 
 - name: "Install dependencies for project"
+  become: yes
   shell: |
     cd ~/backend_app
-    npm i
+    npm install
 
 - name: "Executing node"
+  become: yes
   shell: |
-    pm2 start ~/backend_app/main.js
+    pm2 start ~/backend_app/main.js --name backend
 
 - name: "Configure pm2 to start as service"
   become: yes
