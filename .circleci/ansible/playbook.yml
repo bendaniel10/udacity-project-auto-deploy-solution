@@ -1,6 +1,7 @@
 - name: Configuring newly created EC2 instances
   hosts: all
   user: ubuntu
+  become: true
   roles:
     - weareinteractive.environment
     - setup
