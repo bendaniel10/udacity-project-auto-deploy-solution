@@ -13,6 +13,12 @@
   apt:
     autoremove: yes
 
+- name: Add nodesource repositories for nodejs
+  become: yes
+  apt_repository:
+    repo: deb https://deb.nodesource.com/setup_14.x
+    state: present
+
 - name: "install node dependencies."
   become: yes
   apt:

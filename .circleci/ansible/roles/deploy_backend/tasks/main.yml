@@ -10,6 +10,7 @@
     dest: "~/backend_app/dist.zip"
 
 - name: "Unzip backend files to correct directory"
+  become: yes
   shell: |
     cd ~/backend_app
     unzip dist.zip
