@@ -6,7 +6,7 @@
 
 - name: "Copy compiled backend app"
   copy:
-    src: "files/dist.zip"
+    src: "dist.zip"
     dest: "~/backend_app/dist.zip"
 
 - name: "Unzip backend files to correct directory"
