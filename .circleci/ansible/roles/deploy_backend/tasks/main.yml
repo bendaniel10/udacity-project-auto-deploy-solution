@@ -13,6 +13,7 @@
   shell: |
     cd ~/backend_app
     unzip dist.zip
+    ls -l -a
     rm -rf dist.zip
 
 - name: "Install dependencies for project"
