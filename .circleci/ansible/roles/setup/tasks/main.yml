@@ -13,24 +13,10 @@
   apt:
     autoremove: yes
 
-- name: Install the gpg key for nodejs LTS
+- name: install node
   become: yes
-  apt_key:
-    url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
-    state: present
-
-- name: Add nodesource repositories for nodejs
-  become: yes
-  apt_repository:
-    repo: "deb https://deb.nodesource.com/setup_14.x"
-    state: present
-
-- name: "install node dependencies."
-  become: yes
-  apt:
-    name: [ "nodejs", "npm" ]
-    state: latest
-    update_cache: yes
+  shell: |
+    curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - && sudo apt-get install -y nodejs
 
 - name: "Install zip utility."
   become: yes
