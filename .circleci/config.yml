@@ -288,6 +288,7 @@ jobs:
           name: Test backend app.
           command: |
             API_URL=`cat .circleci/outputs/backend_url.txt`
+            echo $API_URL
             curl -s http://${API_URL}:3030/api/status
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"

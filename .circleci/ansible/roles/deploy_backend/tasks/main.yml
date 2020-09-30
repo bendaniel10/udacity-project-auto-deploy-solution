@@ -10,14 +10,12 @@
     dest: "~/backend_app/dist.zip"
 
 - name: "Unzip backend files to correct directory"
-  become: yes
   shell: |
     cd ~/backend_app
     unzip dist.zip
     rm -rf dist.zip
 
 - name: "Install dependencies for project"
-  become: yes
   shell: |
     cd ~/backend_app
     npm install
