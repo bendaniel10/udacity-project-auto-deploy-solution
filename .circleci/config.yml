@@ -13,8 +13,8 @@ commands:
           command: |
             echo "Destroying environment: <<parameters.workflow_id>> "
 #            aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
-#            aws s3 rm s3://udapeople-prod-<<parameters.workflow_id>> --recursive
-#            aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
+            aws s3 rm s3://udapeople-prod-<<parameters.workflow_id>> --recursive
+            aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
 
   undo_migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -186,9 +186,10 @@ jobs:
             npm run build
             cd dist
             cp ../package.json .
-            zip -r dist.zip *
+            zip -rq dist.zip *
             mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
             mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
+            ls ~/project/.circleci/ansible/roles/deploy_backend/files/
       - add_ssh_keys:
           fingerprints: [ "c8:74:5e:9c:5f:b0:d6:68:27:22:d5:1f:39:a5:a6:a5" ]
       - run:
