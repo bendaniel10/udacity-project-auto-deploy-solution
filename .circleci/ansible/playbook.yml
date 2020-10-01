@@ -6,7 +6,8 @@
     - weareinteractive.environment
   vars:
     environment_config:
-      ENVIRONMENT: production
+      NODE_ENV: production
+      TYPEORM_LOGGING: true
       TYPEORM_CONNECTION: postgres
       TYPEORM_ENTITIES: ./modules/domain/**/*.entity.ts
       TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
