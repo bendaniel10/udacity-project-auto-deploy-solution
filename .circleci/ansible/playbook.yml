@@ -1,11 +1,9 @@
-- name: Configuring newly created EC2 instances
+- name: Configuring Environment variables
   hosts: all
   user: ubuntu
   become: true
   roles:
     - weareinteractive.environment
-    - setup
-    - deploy_backend
   vars:
     environment_config:
       ENVIRONMENT: production
@@ -16,3 +14,10 @@
       TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
       TYPEORM_PASSWORD: "{{ lookup('env','TYPEORM_PASSWORD') }}"
       TYPEORM_DATABASE: "{{ lookup('env','TYPEORM_DATABASE') }}"
+
+- name: Configuring newly created EC2 instances
+  hosts: all
+  user: ubuntu
+  roles:
+    - setup
+    - deploy_backend

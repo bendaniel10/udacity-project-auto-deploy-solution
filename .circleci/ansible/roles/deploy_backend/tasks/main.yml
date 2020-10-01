@@ -16,28 +16,15 @@
     unzip dist.zip
     ls -l -a
     rm -rf dist.zip
-  register: unzip_backend
-
-- debug: var=unzip_backend.stdout_lines
-- debug: var=unzip_backend.stderr
 
 - name: "Install dependencies for project"
   shell: |
     cd ~/backend_app
     npm install
-  register: install_depencencies
-
-- debug: var=install_depencencies.stdout_lines
-- debug: var=install_depencencies.stderr
 
 - name: "Executing node"
-  become: yes
   shell: |
     pm2 start ~/backend_app/main.js --name backend
-  register: execute_pm2
-
-- debug: var=execute_pm2.stdout_lines
-- debug: var=execute_pm2.stderr
 
 - name: "Configure pm2 to start as service"
   become: yes
