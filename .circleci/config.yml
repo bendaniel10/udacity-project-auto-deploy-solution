@@ -384,6 +384,7 @@ workflows:
           requires:
             - deploy_backend_artifact
       - smoke_test_frontend:
+          type: approval
           requires:
             - deploy_frontend_artifact
       - deploy_cloudfront_infrastructure:
