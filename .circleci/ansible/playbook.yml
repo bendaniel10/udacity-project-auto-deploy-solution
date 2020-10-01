@@ -7,9 +7,9 @@
   vars:
     environment_config:
       NODE_ENV: production
-      TYPEORM_LOGGING: true
+      ENVIRONMENT: production
       TYPEORM_CONNECTION: postgres
-      TYPEORM_ENTITIES: ./modules/domain/**/*.entity.ts
+      TYPEORM_ENTITIES: ./modules/domain/**/*.entity.js
       TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
       TYPEORM_PORT: "{{ lookup('env','TYPEORM_PORT') }}"
       TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
