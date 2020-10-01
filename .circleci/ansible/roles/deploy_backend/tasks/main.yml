@@ -12,6 +12,7 @@
 - name: "Unzip backend files to correct directory"
   shell: |
     cd ~/backend_app
+    pwd
     unzip dist.zip
     ls -l -a
     rm -rf dist.zip
