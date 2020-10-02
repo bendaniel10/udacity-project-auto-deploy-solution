@@ -24,7 +24,8 @@
 
 - name: "Executing node"
   shell: |
-    pm2 start ~/backend_app/main.js --name backend
+    cd ~/backend_app
+    pm2 start npm --name backend -- run start:prod
 
 - name: "Configure pm2 to start as service"
   become: yes
