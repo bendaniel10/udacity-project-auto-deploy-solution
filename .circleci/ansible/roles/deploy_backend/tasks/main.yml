@@ -22,20 +22,9 @@
 
 - name: "Executing node"
   shell: |
-    echo "TYPEORM_ENTITIES: $TYPEORM_ENTITIES"
-    echo "TYPEORM_CONNECTION: $TYPEORM_CONNECTION"
+    export
     cd ~/backend_app
     pm2 start main.js
-  environment:
-    NODE_ENV: production
-    ENVIRONMENT: production
-    TYPEORM_CONNECTION: postgres
-    TYPEORM_ENTITIES: ~/backend_app/modules/domain/**/*.entity.js
-    TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
-    TYPEORM_PORT: "{{ lookup('env','TYPEORM_PORT') }}"
-    TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
-    TYPEORM_PASSWORD: "{{ lookup('env','TYPEORM_PASSWORD') }}"
-    TYPEORM_DATABASE: "{{ lookup('env','TYPEORM_DATABASE') }}"
   register: execute_node
 
 - name: print message
