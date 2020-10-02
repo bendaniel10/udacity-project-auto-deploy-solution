@@ -3,6 +3,7 @@
   user: ubuntu
   roles:
     - weareinteractive.environment
+      become: yes
     - setup
     - deploy_backend
   vars:
