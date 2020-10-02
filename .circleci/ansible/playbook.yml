@@ -13,7 +13,7 @@
       NODE_ENV: production
       ENVIRONMENT: production
       TYPEORM_CONNECTION: postgres
-      TYPEORM_ENTITIES: ~/backend_app/modules/domain/**/*.entity.js
+      TYPEORM_ENTITIES: /root/backend_app/modules/domain/**/*.entity.js
       TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
       TYPEORM_PORT: "{{ lookup('env','TYPEORM_PORT') }}"
       TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
