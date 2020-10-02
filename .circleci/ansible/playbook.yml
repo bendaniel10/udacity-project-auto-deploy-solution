@@ -3,8 +3,11 @@
   user: ubuntu
   roles:
     - role: weareinteractive.environment
+      become: true
     - role: setup
+      become: true
     - role: deploy_backend
+      become: true
   vars:
     environment_file_owner: ubuntu
     environment_file_group: ubuntu
