@@ -2,10 +2,10 @@
   hosts: all
   user: ubuntu
   roles:
-    - weareinteractive.environment
+    - role: weareinteractive.environment
       become: yes
-    - setup
-    - deploy_backend
+    - role: setup
+    - role: deploy_backend
   vars:
     environment_file_owner: ubuntu
     environment_file_group: ubuntu
