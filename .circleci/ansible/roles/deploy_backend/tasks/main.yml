@@ -22,16 +22,10 @@
 
 - name: "Executing node"
   shell: |
-    export
+    echo "TYPEORM_ENTITIES: $TYPEORM_ENTITIES"
+    echo "TYPEORM_CONNECTION: $TYPEORM_CONNECTION"
     cd ~/backend_app
-    ls -l -a
     pm2 start main.js
-  register: execute_node
-
-- name: print message
-  debug:
-    msg: "{{ execute_node.stdout_lines }}"
-
   environment:
     NODE_ENV: production
     ENVIRONMENT: production
@@ -42,6 +36,11 @@
     TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
     TYPEORM_PASSWORD: "{{ lookup('env','TYPEORM_PASSWORD') }}"
     TYPEORM_DATABASE: "{{ lookup('env','TYPEORM_DATABASE') }}"
+  register: execute_node
+
+- name: print message
+  debug:
+    msg: "{{ execute_node.stdout_lines }}"
 
 - name: "Configure pm2 to start as service"
   become: yes
