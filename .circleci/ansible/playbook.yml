@@ -9,9 +9,6 @@
     - role: deploy_backend
       become: true
   vars:
-    environment_file_owner: ubuntu
-    environment_file_group: ubuntu
-    environment_file: ~/.profile
     environment_config:
       NODE_ENV: production
       ENVIRONMENT: production
