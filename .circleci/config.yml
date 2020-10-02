@@ -12,7 +12,7 @@ commands:
           when: on_fail
           command: |
             echo "Destroying environment: <<parameters.workflow_id>> "
-            # aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
             aws s3 rm s3://udapeople-prod-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
 
@@ -301,41 +301,31 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Save previous bucket id suffix
-          command: |
-            PREVIOUS_BUCKET_ID_SUFFIX=$(aws cloudformation \
-                          list-exports --query "Exports[?Name==\`BucketIdSuffix\`].Value" \
-                          --no-paginate --output text)
-
-            echo "$PREVIOUS_BUCKET_ID_SUFFIX" >> .circleci/outputs/previous_bucket_id_suffix.txt
-
-            cat .circleci/outputs/previous_bucket_id_suffix.txt
-      - run:
           name: Deploy the backend infrastructure using cloudformation
           command: |
             OLD_WORKFLOW_ID=$(aws cloudformation \
               list-exports --query "Exports[?Name==\`UdapeopleWorkflowID\`].Value" \
               --no-paginate --output text)
 
-            echo "OLD_WORKFLOW_ID: $OLD_WORKFLOW_ID"
+            echo "OLD_WORKFLOW_ID: $OLD_WORKFLOW_ID."
 
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
               --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
 
-            echo "STACKS: $STACKS"
+            printf '%s\n' "${STACKS[@]}"
 
             aws cloudformation deploy \
               --template-file .circleci/cloudformation/cloudfront_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
               --stack-name udapeople-prod-cloudfront
 
-            if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
-            then
+            if printf '%s\n' "${STACKS[@]}" | grep -q -x '$OLD_WORKFLOW_ID'; then
               echo "Removing previous stack"
               aws s3 rm "s3://udapeople-prod-${OLD_WORKFLOW_ID}" --recursive
               aws cloudformation delete-stack --stack-name "udapeople-prod-backend-${OLD_WORKFLOW_ID}"
               aws cloudformation delete-stack --stack-name "udapeople-prod-frontend-${OLD_WORKFLOW_ID}"
             fi
+
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - undo_migrations
