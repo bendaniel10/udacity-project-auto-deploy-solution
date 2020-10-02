@@ -12,9 +12,9 @@ commands:
           when: on_fail
           command: |
             echo "Destroying environment: <<parameters.workflow_id>> "
-            aws cloudformation delete-stack --stack-name udapeople-prod-backend-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name udapeople-backend-prod-<<parameters.workflow_id>>
             aws s3 rm s3://udapeople-prod-<<parameters.workflow_id>> --recursive
-            aws cloudformation delete-stack --stack-name udapeople-prod-frontend-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name udapeople-frontend-prod-<<parameters.workflow_id>>
 
   undo_migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -99,7 +99,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/cloudformation/backend_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --stack-name udapeople-prod-backend-${CIRCLE_WORKFLOW_ID:0:7}
+              --stack-name udapeople-backend-prod-${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Save backend URL and IP (for ansible)
           command: |
@@ -132,7 +132,7 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/cloudformation/frontend_infrastructure.yml \
               --parameter-overrides ID="prod-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --stack-name udapeople-prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+              --stack-name udapeople-frontend-prod-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
 
@@ -322,8 +322,8 @@ jobs:
             if printf '%s\n' "${STACKS[@]}" | grep -q -x '$OLD_WORKFLOW_ID'; then
               echo "Removing previous stack"
               aws s3 rm "s3://udapeople-prod-${OLD_WORKFLOW_ID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-prod-backend-${OLD_WORKFLOW_ID}"
-              aws cloudformation delete-stack --stack-name "udapeople-prod-frontend-${OLD_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-prod-${OLD_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-prod-${OLD_WORKFLOW_ID}"
             fi
 
       - destroy_environment:
