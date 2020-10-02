@@ -2,5 +2,18 @@
   hosts: all
   user: ubuntu
   roles:
+    - weareinteractive.environment
     - setup
     - deploy_backend
+  vars:
+    environment_file_owner: ubuntu
+    environment_file_group: ubuntu
+    NODE_ENV: production
+    ENVIRONMENT: production
+    TYPEORM_CONNECTION: postgres
+    TYPEORM_ENTITIES: ~/backend_app/modules/domain/**/*.entity.js
+    TYPEORM_HOST: "{{ lookup('env','TYPEORM_HOST') }}"
+    TYPEORM_PORT: "{{ lookup('env','TYPEORM_PORT') }}"
+    TYPEORM_USERNAME: "{{ lookup('env','TYPEORM_USERNAME') }}"
+    TYPEORM_PASSWORD: "{{ lookup('env','TYPEORM_PASSWORD') }}"
+    TYPEORM_DATABASE: "{{ lookup('env','TYPEORM_DATABASE') }}"

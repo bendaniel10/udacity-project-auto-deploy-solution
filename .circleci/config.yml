@@ -195,6 +195,7 @@ jobs:
           command: |
             ls ~/project/.circleci/ansible/roles/deploy_backend/files/
             cd ~/project/backend
+            ansible-galaxy install weareinteractive.environment
             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/playbook.yml
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
