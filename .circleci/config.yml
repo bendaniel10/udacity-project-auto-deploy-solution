@@ -216,6 +216,7 @@ jobs:
           name: Package frontend app
           command: |
             export API_URL=`cat .circleci/outputs/backend_url.txt`
+            echo "API_URL: $API_URL"
             cd ~/project/frontend
             npm i
             npm install typescript@rc
