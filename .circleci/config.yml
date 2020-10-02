@@ -317,8 +317,12 @@ jobs:
               list-exports --query "Exports[?Name==\`UdapeopleWorkflowID\`].Value" \
               --no-paginate --output text)
 
+            echo "OLD_WORKFLOW_ID: $OLD_WORKFLOW_ID"
+
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
               --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+
+            echo "STACKS: $STACKS"
 
             aws cloudformation deploy \
               --template-file .circleci/cloudformation/cloudfront_infrastructure.yml \
@@ -327,6 +331,7 @@ jobs:
 
             if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
             then
+              echo "Removing previous stack"
               aws s3 rm "s3://udapeople-prod-${OLD_WORKFLOW_ID}" --recursive
               aws cloudformation delete-stack --stack-name "udapeople-prod-backend-${OLD_WORKFLOW_ID}"
               aws cloudformation delete-stack --stack-name "udapeople-prod-frontend-${OLD_WORKFLOW_ID}"
