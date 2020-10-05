@@ -8,6 +8,8 @@
       become: true
     - role: deploy_backend
       become: true
+    - role: configure_node_exporter
+      become: true
   vars:
     environment_config:
       NODE_ENV: production
